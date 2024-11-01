@@ -1,0 +1,20 @@
+config:
+  target: http://localhost:4000
+  phases:
+    - duration: 20
+      arrivalRate:  200
+      name: Startup phase
+  plugins:
+    metrics-by-endpoint: {}
+scenarios:
+  - flow:
+    - get:
+        url: "/"
+    - get:
+        url: "/1"
+    - get:
+        url: "/1/styles"
+    - get:
+        url: "/1/styles2"
+    - get:
+        url: "/1/related"
