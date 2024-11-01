@@ -1,20 +1,26 @@
 config:
-  target: http://localhost:4000
+  target: "http://localhost:4000"
   phases:
     - duration: 20
-      arrivalRate:  200
-      name: Startup phase
-  plugins:
+      arrivalRate: 20
+      name: "Warming up"
+    - duration: 60
+      arrivalRate: 200
+      rampTo: 500
+      name: "Ramping up"
+    - duration: 180
+      arrivalRate: 750
+      name: "Sustained load"
+plugins:
     metrics-by-endpoint: {}
 scenarios:
-  - flow:
-    - get:
-        url: "/"
-    - get:
-        url: "/1"
-    - get:
-        url: "/1/styles"
-    - get:
-        url: "/1/styles2"
-    - get:
-        url: "/1/related"
+  - name: "Making random Queries"
+    flow:
+      - get:
+          url: "/?page={{$randomNumber(5,20)}}"
+      - get:
+          url: "/{{$randomNumber(1,1000011)}}/styles"
+      - get:
+          url: "/{{$randomNumber(1,1000011)}}/related"
+      - get:
+          url: "/{{$randomNumber(1,1000011)}}"

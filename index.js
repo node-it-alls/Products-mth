@@ -58,7 +58,13 @@ app.get('/:id/styles', (req, res) => {
       const styles ={}
       results[0].forEach(result=>{
         const {id,style_id,name,original_price,sale_price,default_style}=result;
-        styles[id]={style_id:id,name,original_price:original_price+".00",sale_price,'default?':!!default_style};
+        styles[id]={
+          style_id:id,
+          name,
+          original_price:original_price+".00",
+          sale_price:sale_price?sale_price+".00":null,
+          'default?':!!default_style
+        };
         const thumbnails =result.thumbnails.split(',');
         const urls=result.photos.split(',');
         const photos =thumbnails.map((thumbnail_url,i)=>({thumbnail_url,url:urls[i]}));
