@@ -1,7 +1,6 @@
 const fs = require('fs');
 const readline = require('readline');
 const mysql = require('mysql2');
-const csv = require('csv-parser');
 const Papa = require("papaparse");
 const { promisify } = require('util');
 require('dotenv').config()
@@ -60,16 +59,12 @@ async function insertBatch(tableName, fields) {
   const query = `REPLACE INTO ${tableName} (${fields.join(',')}) VALUES ?`;
   const queryPromise = promisify(pool.query).bind(pool);
 
-  try {
-    await queryPromise(query, [batch[tableName]]);
-    //await executePromise(query,[batch[tableName]]);
+  queryPromise(query, [batch[tableName]])
+  .then(r=>{
     console.log(`Inserted batch of ${batch[tableName].length} records.`);
-  } catch (err) {
-    console.error('Error inserting batch:', err);
-  } finally {
     batch[tableName] = []; // Clear the batch for the next set of records
-
-  }
+  })
+  .catch(e=>console.error('Error inserting batch:', e))
 }
 
 let go = async () => await allTables.forEach(table => processLineByLine(table))
