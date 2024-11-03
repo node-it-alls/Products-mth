@@ -3,6 +3,7 @@ const readline = require('readline');
 const mysql = require('mysql2');
 const Papa = require("papaparse");
 const { promisify } = require('util');
+const path = require('path');
 require('dotenv').config()
 
 const pool = mysql.createPool({
@@ -29,7 +30,7 @@ async function processLineByLine(nameFields) {
 
   const [tableName, fields] = nameFields;
   const fileName = `${tableName}.csv`;
-  const fileStream = fs.createReadStream(fileName);
+  const fileStream = fs.createReadStream(path.join(__dirname,'csvs',fileName));
 
   const rl = readline.createInterface({
     input: fileStream,
