@@ -1,33 +1,34 @@
 config:
   target: "http://localhost:4000"
-  processor: './idGen.js'
+  # processor: './idGen.js'
   phases:
     - duration: 20
       arrivalRate: 20
       name: "Warming up"
-    - duration: 60
-      arrivalRate: 40
-      rampTo: 500
+    - duration: 30
+      arrivalRate: 20
+      #rampTo: 8000
       name: "Ramping up"
-    - duration: 180
-      arrivalRate: 400
+    - duration: 60
+      arrivalRate: 30
+      #rampTo: 8000
       name: "Sustained load"
 plugins:
     metrics-by-endpoint: {}
 scenarios:
   - name: "Making random Queries"
     flow:
-      # - get:
-      #     url: "/?page={{$randomNumber(5,20)}}"
+    - loop:
+      - get:
+          url: "/?page={{$randomNumber(5,20)}}"
       - get:
           url: "/1/styles"
-       - get:
-           url: "/{{$randomNumber(1,1000011)}}/styles
-      # - get:
-      #     url: "/{{$randomNumber(1,1000011)}}/styles"
-      # - get:
-      #     url: "/{{$randomNumber(1,1000011)}}/styles2"
-      # - get:
-      #     url: "/{{$randomNumber(1,1000011)}}/related"
-      # - get:
-      #     url: "/{{$randomNumber(1,1000011)}}"
+      - get:
+          url: "/{{$randomNumber(1,1000011)}}/styles"
+      - get:
+          url: "/{{$randomNumber(1,1000011)}}/styles2"
+      - get:
+          url: "/{{$randomNumber(1,1000011)}}/related"
+      - get:
+          url: "/{{$randomNumber(1,1000011)}}"
+      count: 100
