@@ -16,6 +16,7 @@ const pool = mysql.createPool({
 });
 
 const queryPromise = promisify(pool.query).bind(pool);
+
 let cache = null;
 if (CACHING_ENABLED) {
   cache = new LRUCache({
@@ -23,23 +24,22 @@ if (CACHING_ENABLED) {
     updateAgeOnGet: true,
     updateAgeOnHas: true,
   });
+  app.use((req, res, next) => {
+    const key = getKey(req);
+    if (cache.has(key)) {
+      return res.send(cache.get(key));
+    }
+    next();
+  });
 }
-
-app.use((req, res, next) => {
-  if (CACHING_ENABLED) {
-    const key = req.path + "," + req.query;
-    cache.has(key) ? res.send(cache.get(key)) : next();
-    return;
-  }
-  next();
-});
 
 const logAndSend = (e, res, statusCode = 400) => {
   console.log(e);
   res.sendStatus(statusCode);
 };
 
-const getKey = req => req.path + "," + req.query;
+const getKey = req => req.path + "," + (req.query.page || "") + ',' + (req.query.count || "");
+
 const mapAndSend = (res, key, val) => {
   if (CACHING_ENABLED) {
     cache.set(key, val);
@@ -63,19 +63,18 @@ app.get('/', (req, res) => {
       mapAndSend(res, getKey(req), results);
     })
     .catch(e => logAndSend(e, res));
-})
+});
+
 app.get('/:id/styles2', (req, res) => {
-  //console.log(req.path,req.query)
   let id = req.params.id;
   if (!id || id < 0 || id % 1 !== 0) return res.status(400).send("invalid id");
-  //MEGA JOIN
-  // const query1 = "select s.id as style_id,name,original_price,sale_price,default_style,GROUP_CONCAT(thumbnail_url,\",\",url SEPARATOR ',') as photos ,GROUP_CONCAT(CONCAT(sk.id,',',size,',',quantity) SEPARATOR ',') as skus  from styles s left join photos p on s.id=p.style_id  left join skus sk on s.id=sk.style_id where s.product_id=1 GROUP BY s.id";
-  //WORKING
-  // const query1 = "select * from (SELECT style_id,GROUP_CONCAT(sk.id,',',size,',',quantity SEPARATOR ',') as skus from skus sk join styles on styles.id=sk.style_id where product_id=1 GROUP BY styles.id) as skus join (SELECT style_id,GROUP_CONCAT(thumbnail_url,',',url SEPARATOR ',') as photos from photos photoTable join styles on photoTable.style_id=styles.id where product_id=1 GROUP BY styles.id) as photos on photos.style_id=skus.style_id";
-  // const query1 = "select  styles.id,styles.name,styles.original_price,styles.sale_price,styles.default_style,photos,skus from styles LEFT join (SELECT style_id,GROUP_CONCAT(thumbnail_url,',',url SEPARATOR ',') as photos from photos photoTable join styles on photoTable.style_id=styles.id where product_id=? GROUP BY styles.id) as photoQuery on photoQuery.style_id=styles.id join(SELECT style_id,name,original_price,sale_price,default_style,GROUP_CONCAT(sk.id,',',size,',',quantity SEPARATOR ',') as skus from skus sk join styles on styles.id=sk.style_id where product_id=? GROUP BY styles.id) as skusQuery on photoQuery.style_id=skusQuery.style_id";
-  // const query1 = "select  styles.id,styles.name,styles.original_price,styles.sale_price,styles.default_style from styles join (select * from photos p) as p2 on styles.id=p2.styles_id  where product_id=?";
   const query1 =
-    `SELECT *  FROM styles  LEFT JOIN photos_concat ON styles.id=photos_concat.style_id  LEFT JOIN skus_concat ON styles.id=skus_concat.style_id    WHERE product_id = ${id}`
+    `SELECT *  FROM styles
+    LEFT JOIN photos_concat
+    ON styles.id=photos_concat.style_id
+    LEFT JOIN skus_concat
+    ON styles.id=skus_concat.style_id
+    WHERE product_id = ${id}`;
   queryPromise(query1)
     .then(results => {
       const output = { product_id: id, results: [] };
@@ -94,11 +93,12 @@ app.get('/:id/styles2', (req, res) => {
           const [thumbnail_url, url] = [splitPhotos[i], splitPhotos[i + 1]];
           photos.push({ thumbnail_url, url });
         }
-        const resSkus = result.skus.split(',');
+        const resSkus = result.skus?.split(',') || ['null', null, null];
         const skus = {};
         styles[style_id]['skus'] = skus;
         for (let i = 0; i < resSkus.length; i += 3) {
-          const [sku_id, size, quantity] = [resSkus[i], resSkus[i + 1], Number(resSkus[i + 2])];
+          let [sku_id, size, quantity] = [resSkus[i], resSkus[i + 1], Number(resSkus[i + 2])];
+          if (result.skus === null) quantity = resSkus[i + 2];
           skus[sku_id] = { quantity, size };
         }
       });
@@ -111,25 +111,36 @@ app.get('/:id/styles2', (req, res) => {
 app.get('/:id/styles', (req, res) => {
   let id = req.params.id;
   if (!id || id < 0 || id % 1 !== 0) return res.status(400).send("invalid id");
-  const query1 = "SELECT st.id,name,original_price,sale_price,default_style,GROUP_CONCAT(thumbnail_url SEPARATOR ',') as thumbnails,GROUP_CONCAT(url SEPARATOR ',') as photos from styles st join photos p on st.id=p.style_id where product_id=? GROUP BY style_id";
-  const query2 = 'SELECT st.id as styles_id,s.id as sku_id,size,quantity from styles st join skus s on st.id=s.style_id where product_id=? ';
-  Promise.all([queryPromise(query1, [id]), queryPromise(query2, [id])])
+  const query1 =
+    `SELECT st.id,name,original_price,sale_price,\`default?\`,photos
+    FROM styles st
+    LEFT JOIN photos_concat p
+    ON st.id=p.style_id
+    WHERE product_id=${id}`;
+  const query2 =
+    `SELECT st.id as styles_id,s.id as sku_id,size,quantity
+    FROM styles st
+    LEFT JOIN skus s on st.id=s.style_id
+    WHERE product_id=${id} `;
+  Promise.all([queryPromise(query1), queryPromise(query2)])
     .then(results => {
       const output = { product_id: id, results: [] };
       const styles = {};
       results[0].forEach(result => {
-        const { id, style_id, name, original_price, sale_price, default_style } = result;
+        const { id, style_id, name, original_price, sale_price } = result;
         styles[id] = {
           style_id: id,
           name,
           original_price: original_price + ".00",
           sale_price: sale_price ? sale_price + ".00" : null,
-          'default?': !!default_style
+          'default?': !!result['default?']
         };
-        const thumbnails = result.thumbnails.split(',');
-        const urls = result.photos.split(',');
-        const photos = thumbnails.map((thumbnail_url, i) => ({ thumbnail_url, url: urls[i] }));
-        styles[id].photos = photos;
+        const splitPhotos = result.photos?.split(',') || [null, null];
+        styles[id].photos = [];
+        for (let i = 0; i < splitPhotos.length; i += 2) {
+          const [thumbnail_url, url] = [splitPhotos[i], splitPhotos[i + 1]];
+          styles[id].photos.push({ thumbnail_url, url });
+        }
         styles[id].skus = {};
       });
       results[1].forEach(result => {
@@ -163,6 +174,7 @@ app.get('/:id', (req, res) => {
   Promise.all([queryPromise(query1, [id]), queryPromise(query2, [id])])
     .then(results => {
       const output = { ...results[0][0], features: results[1] };
+      output['default_price'] = Number(output['default_price']).toFixed(2);
       mapAndSend(res, getKey(req), output);
     })
     .catch(e => logAndSend(e, res));
@@ -171,19 +183,23 @@ app.get('/:id', (req, res) => {
 app.get('/:id/2', (req, res) => {
   let id = req.params.id;
   if (id < 0 || id % 1 !== 0) return res.status(400).send("invalid id");
-  const query1 = `SELECT p.id,name,slogan,description,category,default_price,GROUP_CONCAT(feature,',',value)as features
-  FROM products p
-  JOIN features f
-  ON p.id=f.product_id
-  WHERE f.product_id=?`;
+  const query1 =
+    `SELECT p.id, name, slogan, description, category, default_price,
+    GROUP_CONCAT(feature,',',IFNULL(value,'NULL')) as features
+    FROM products p
+    LEFT JOIN features f
+    ON p.id=f.product_id
+    WHERE f.product_id=?`;
   queryPromise(query1, [id, id])
     .then(results => {
       const output = { ...results[0] };
       let featureList = results[0].features?.split(',') || [];
+      output['default_price'] = Number(output['default_price']).toFixed(2);
       let newFeatures = [];
       output['features'] = newFeatures;
       for (let i = 0; i < featureList.length; i += 2) {
-        const [feature, value] = [featureList[i], featureList[i + 1]];
+        let [feature, value] = [featureList[i], featureList[i + 1]];
+        value = value === 'NULL' ? null : value;
         newFeatures.push({ feature, value });
       }
       mapAndSend(res, getKey(req), output);
