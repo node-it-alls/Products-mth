@@ -30,7 +30,7 @@ CREATE TABLE `styles` (
   `name` VARCHAR(255)  NULL,
   `original_price` DECIMAL  NULL,
   `sale_price` DECIMAL NULL,
-  `default_style` TINYINT  NULL,
+  `default?` BOOLEAN  NULL,
   PRIMARY KEY (`id`),
   INDEX(`product_id`)
 );
