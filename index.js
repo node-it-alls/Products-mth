@@ -75,31 +75,35 @@ app.get('/:id/styles2', (req, res) => {
   // const query1 = "select  styles.id,styles.name,styles.original_price,styles.sale_price,styles.default_style,photos,skus from styles LEFT join (SELECT style_id,GROUP_CONCAT(thumbnail_url,',',url SEPARATOR ',') as photos from photos photoTable join styles on photoTable.style_id=styles.id where product_id=? GROUP BY styles.id) as photoQuery on photoQuery.style_id=styles.id join(SELECT style_id,name,original_price,sale_price,default_style,GROUP_CONCAT(sk.id,',',size,',',quantity SEPARATOR ',') as skus from skus sk join styles on styles.id=sk.style_id where product_id=? GROUP BY styles.id) as skusQuery on photoQuery.style_id=skusQuery.style_id";
   // const query1 = "select  styles.id,styles.name,styles.original_price,styles.sale_price,styles.default_style from styles join (select * from photos p) as p2 on styles.id=p2.styles_id  where product_id=?";
   const query1 =
-    `SELECT * FROM styles
-  LEFT JOIN photos_concat ON styles.id=photos_concat.style_id  LEFT JOIN skus_concat ON styles.id=skus_concat.style_id  where product_id = ?`;
-  queryPromise(query1, [id, id])
+    `SELECT *  FROM styles  LEFT JOIN photos_concat ON styles.id=photos_concat.style_id  LEFT JOIN skus_concat ON styles.id=skus_concat.style_id    WHERE product_id = ${id}`
+  queryPromise(query1)
     .then(results => {
-      /*const output = {product_id:id,results:[]};
-      const styles ={}
-      results.forEach(result=>{
-        const {id,style_id,name,original_price,sale_price,default_style}=result;
-        styles[style_id]={style_id,name,original_price,sale_price,default_style}
-        const splitPhotos = result.photos.split(',');
-        const photos =[];
-        for(let i =0; i < splitPhotos.length;i+=2){
-          const [thumbnail_url,url]=splitPhotos[i];
-          //photos.push({thumbnail_url,url});
-          photos.push(splitPhotos[i],splitPhotos[i+1]);
+      const output = { product_id: id, results: [] };
+      const styles = {}
+      results.forEach(result => {
+        const defaultStyle = !!result['default?'];
+        const { id, style_id, name } = result;
+        let {original_price, sale_price } = result;
+        original_price = original_price ? Number(original_price).toFixed(2) : original_price;
+        sale_price = sale_price ? Number(sale_price).toFixed(2) : sale_price;
+        styles[style_id] = { style_id, name, original_price, sale_price, 'default?': defaultStyle }
+        const splitPhotos = result.photos?.split(',') || [];
+        const photos = [];
+        styles[style_id]['photos'] = photos
+        for (let i = 0; i < splitPhotos.length; i += 2) {
+          const [thumbnail_url, url] = [splitPhotos[i], splitPhotos[i + 1]];
+          photos.push({ thumbnail_url, url });
         }
-        styles[style_id]['photos']=photos;
-        styles[style_id]['photos']=result.photos;
-        //styles[id]['photos'] = result.photos.map((thumbnail_url,url)=>{thumbnail_url,url});
-
+        const resSkus= result.skus.split(',');
+        const skus = {};
+        styles[style_id]['skus']=skus;
+        for (let i = 0; i < resSkus.length; i += 3) {
+          const [sku_id,size, quantity] = [resSkus[i], resSkus[i + 1],Number(resSkus[i+2])];
+          skus[sku_id]={quantity,size};
+        }
       })
-      output['results']=Object.values(styles);*/
-      mapAndSend(res, getKey(req), results);
-      //res.send(results)
-      //res.send(output);
+      output['results'] = Object.values(styles);
+      mapAndSend(res, getKey(req), output);
     })
     .catch(e => logAndSend(e, res))
 });
@@ -162,7 +166,7 @@ app.get('/:id', (req, res) => {
     .then(results => {
       const output = { ...results[0][0], features: results[1] }
       mapAndSend(res, getKey(req), output);
-      //res.send(output)
+
     })
     .catch(e => logAndSend(e, res))
 })
