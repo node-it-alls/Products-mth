@@ -2,11 +2,11 @@ const axios = require('axios');
 const path = require('path');
 const PRODUCT_ID_OFFSET = -40343;
 const STYLE_ID_OFFSET = -240499;
-const SKU_ID_OFFSET =-1394768
+const SKU_ID_OFFSET = -1394768
 const host = 'http://localhost:4000';
 const firstProduct = 40344 + PRODUCT_ID_OFFSET;
-  const firstStyle = 240500 + STYLE_ID_OFFSET;
-  const firstSku= 1394769+ SKU_ID_OFFSET;
+const firstStyle = 240500 + STYLE_ID_OFFSET;
+const firstSku = 1394769 + SKU_ID_OFFSET;
 test('the products should return all the fields for /:id route', () => {
 
   const results = axios.get(path.join(host, firstProduct.toString())).then(res => {
@@ -239,73 +239,73 @@ test('the products should work correctly with page and count variables / main pr
 });
 test('the styles route should return almost matching data to the heeroku ', () => {
 
-  const results = axios.get(path.join(host, firstProduct.toString(),"styles")).then(res => {
-const testData={
-  "product_id": firstProduct,
-  "results": [
-      {
+  const results = axios.get(path.join(host, firstProduct.toString(), "styles")).then(res => {
+    const testData = {
+      "product_id": firstProduct,
+      "results": [
+        {
           "style_id": firstStyle,
           "name": "Forest Green & Black",
           "original_price": "140.00",
           "sale_price": null,
           "default?": true,
           "photos": [
-              {
-                  "thumbnail_url": "https://images.unsplash.com/photo-1501088430049-71c79fa3283e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-                  "url": "https://images.unsplash.com/photo-1501088430049-71c79fa3283e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=668&q=80"
-              },
-              {
-                  "thumbnail_url": "https://images.unsplash.com/photo-1534011546717-407bced4d25c?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-                  "url": "https://images.unsplash.com/photo-1534011546717-407bced4d25c?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2734&q=80"
-              },
-              {
-                  "thumbnail_url": "https://images.unsplash.com/photo-1549831243-a69a0b3d39e0?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-                  "url": "https://images.unsplash.com/photo-1549831243-a69a0b3d39e0?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2775&q=80"
-              },
-              {
-                  "thumbnail_url": "https://images.unsplash.com/photo-1527522883525-97119bfce82d?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80",
-                  "url": "https://images.unsplash.com/photo-1527522883525-97119bfce82d?ixlib=rb-1.2.1&auto=format&fit=crop&w=668&q=80"
-              },
-              {
-                  "thumbnail_url": "https://images.unsplash.com/photo-1556648202-80e751c133da?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-                  "url": "https://images.unsplash.com/photo-1556648202-80e751c133da?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=668&q=80"
-              },
-              {
-                  "thumbnail_url": "https://images.unsplash.com/photo-1532543491484-63e29b3c1f5d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-                  "url": "https://images.unsplash.com/photo-1532543491484-63e29b3c1f5d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1000&q=80"
-              }
+            {
+              "thumbnail_url": "https://images.unsplash.com/photo-1501088430049-71c79fa3283e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
+              "url": "https://images.unsplash.com/photo-1501088430049-71c79fa3283e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=668&q=80"
+            },
+            {
+              "thumbnail_url": "https://images.unsplash.com/photo-1534011546717-407bced4d25c?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
+              "url": "https://images.unsplash.com/photo-1534011546717-407bced4d25c?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2734&q=80"
+            },
+            {
+              "thumbnail_url": "https://images.unsplash.com/photo-1549831243-a69a0b3d39e0?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
+              "url": "https://images.unsplash.com/photo-1549831243-a69a0b3d39e0?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2775&q=80"
+            },
+            {
+              "thumbnail_url": "https://images.unsplash.com/photo-1527522883525-97119bfce82d?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80",
+              "url": "https://images.unsplash.com/photo-1527522883525-97119bfce82d?ixlib=rb-1.2.1&auto=format&fit=crop&w=668&q=80"
+            },
+            {
+              "thumbnail_url": "https://images.unsplash.com/photo-1556648202-80e751c133da?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
+              "url": "https://images.unsplash.com/photo-1556648202-80e751c133da?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=668&q=80"
+            },
+            {
+              "thumbnail_url": "https://images.unsplash.com/photo-1532543491484-63e29b3c1f5d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
+              "url": "https://images.unsplash.com/photo-1532543491484-63e29b3c1f5d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1000&q=80"
+            }
           ],
           "skus": {
             1394769: {
-                  "quantity": 8,
-                  "size": "XS"
-              },
-              1394770: {
-                  "quantity": 16,
-                  "size": "S"
-              },
-              1394771: {
-                  "quantity": 17,
-                  "size": "M"
-              },
-              1394772: {
-                  "quantity": 10,
-                  "size": "L"
-              },
-              1394773: {
-                  "quantity": 15,
-                  "size": "XL"
-              },
-              1394774: {
-                  "quantity": 4,
-                  "size": "XL"
-              }
+              "quantity": 8,
+              "size": "XS"
+            },
+            1394770: {
+              "quantity": 16,
+              "size": "S"
+            },
+            1394771: {
+              "quantity": 17,
+              "size": "M"
+            },
+            1394772: {
+              "quantity": 10,
+              "size": "L"
+            },
+            1394773: {
+              "quantity": 15,
+              "size": "XL"
+            },
+            1394774: {
+              "quantity": 4,
+              "size": "XL"
+            }
           }
-      }]
+        }]
     };
-    const oldSkus= Object.entries(testData.results[0].skus);
-    const newSkus = oldSkus.map(([id,val],i)=>[(Number(id)+SKU_ID_OFFSET).toString(),val]);
-    testData.results[0].skus=Object.fromEntries(newSkus)
+    const oldSkus = Object.entries(testData.results[0].skus);
+    const newSkus = oldSkus.map(([id, val], i) => [(Number(id) + SKU_ID_OFFSET).toString(), val]);
+    testData.results[0].skus = Object.fromEntries(newSkus)
     expect(Number(res.data.product_id)).toBe(testData.product_id)
     expect(res.data.results[0]).toEqual(testData.results[0]);
   })
