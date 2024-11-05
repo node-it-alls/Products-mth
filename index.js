@@ -22,7 +22,7 @@ if (CACHING_ENABLED) {
     max: 333000,
     updateAgeOnGet: true,
     updateAgeOnHas: true,
-  })
+  });
 }
 
 app.use((req, res, next) => {
@@ -57,12 +57,12 @@ app.get('/', (req, res) => {
   if (count < 1 || count % 1 !== 0 || count > 20000) {
     return res.status(400).send("Invalid count");
   }
-  const query = 'SELECT * FROM products LIMIT ? OFFSET ?'
+  const query = 'SELECT * FROM products LIMIT ? OFFSET ?';
   queryPromise(query, [count, count * (page - 1)])
     .then(results => {
       mapAndSend(res, getKey(req), results);
     })
-    .catch(e => logAndSend(e, res))
+    .catch(e => logAndSend(e, res));
 })
 app.get('/:id/styles2', (req, res) => {
   //console.log(req.path,req.query)
@@ -79,45 +79,44 @@ app.get('/:id/styles2', (req, res) => {
   queryPromise(query1)
     .then(results => {
       const output = { product_id: id, results: [] };
-      const styles = {}
+      const styles = {};
       results.forEach(result => {
         const defaultStyle = !!result['default?'];
         const { id, style_id, name } = result;
-        let {original_price, sale_price } = result;
+        let { original_price, sale_price } = result;
         original_price = original_price ? Number(original_price).toFixed(2) : original_price;
         sale_price = sale_price ? Number(sale_price).toFixed(2) : sale_price;
-        styles[style_id] = { style_id, name, original_price, sale_price, 'default?': defaultStyle }
+        styles[style_id] = { style_id, name, original_price, sale_price, 'default?': defaultStyle };
         const splitPhotos = result.photos?.split(',') || [];
         const photos = [];
-        styles[style_id]['photos'] = photos
+        styles[style_id]['photos'] = photos;
         for (let i = 0; i < splitPhotos.length; i += 2) {
           const [thumbnail_url, url] = [splitPhotos[i], splitPhotos[i + 1]];
           photos.push({ thumbnail_url, url });
         }
-        const resSkus= result.skus.split(',');
+        const resSkus = result.skus.split(',');
         const skus = {};
-        styles[style_id]['skus']=skus;
+        styles[style_id]['skus'] = skus;
         for (let i = 0; i < resSkus.length; i += 3) {
-          const [sku_id,size, quantity] = [resSkus[i], resSkus[i + 1],Number(resSkus[i+2])];
-          skus[sku_id]={quantity,size};
+          const [sku_id, size, quantity] = [resSkus[i], resSkus[i + 1], Number(resSkus[i + 2])];
+          skus[sku_id] = { quantity, size };
         }
-      })
+      });
       output['results'] = Object.values(styles);
       mapAndSend(res, getKey(req), output);
     })
-    .catch(e => logAndSend(e, res))
+    .catch(e => logAndSend(e, res));
 });
 
 app.get('/:id/styles', (req, res) => {
   let id = req.params.id;
   if (!id || id < 0 || id % 1 !== 0) return res.status(400).send("invalid id");
-  //SKU AND PHOTOS join skus s
-  const query1 = "SELECT st.id,name,original_price,sale_price,default_style,GROUP_CONCAT(thumbnail_url SEPARATOR ',') as thumbnails,GROUP_CONCAT(url SEPARATOR ',') as photos from styles st join photos p on st.id=p.style_id where product_id=? GROUP BY style_id;"
-  const query2 = 'SELECT st.id as styles_id,s.id as sku_id,size,quantity from styles st join skus s on st.id=s.style_id where product_id=? ;'
+  const query1 = "SELECT st.id,name,original_price,sale_price,default_style,GROUP_CONCAT(thumbnail_url SEPARATOR ',') as thumbnails,GROUP_CONCAT(url SEPARATOR ',') as photos from styles st join photos p on st.id=p.style_id where product_id=? GROUP BY style_id";
+  const query2 = 'SELECT st.id as styles_id,s.id as sku_id,size,quantity from styles st join skus s on st.id=s.style_id where product_id=? ';
   Promise.all([queryPromise(query1, [id]), queryPromise(query2, [id])])
     .then(results => {
       const output = { product_id: id, results: [] };
-      const styles = {}
+      const styles = {};
       results[0].forEach(result => {
         const { id, style_id, name, original_price, sale_price, default_style } = result;
         styles[id] = {
@@ -141,38 +140,59 @@ app.get('/:id/styles', (req, res) => {
       res[req.path] = output;
       mapAndSend(res, getKey(req), output);
     })
-    .catch(e => logAndSend(e, res))
+    .catch(e => logAndSend(e, res));
 });
 
 app.get('/:id/related', (req, res) => {
   let id = req.params.id;
   if (id < 0 || id % 1 !== 0) return res.status(400).send("invalid id");
-  const query = 'SELECT related_id FROM related where product_id=?'
+  const query = 'SELECT related_id FROM related where product_id=?';
   queryPromise(query, [id])
     .then(results => {
       const idList = results.map(({ related_id }) => related_id);
       mapAndSend(res, getKey(req), idList);
-      //res.send(idList);
     })
-    .catch(e => logAndSend(e, res))
+    .catch(e => logAndSend(e, res));
 });
 
 app.get('/:id', (req, res) => {
   let id = req.params.id;
   if (id < 0 || id % 1 !== 0) return res.status(400).send("invalid id");
-  const query1 = 'SELECT * FROM products p where p.id=? LIMIT 1'
-  const query2 = 'SELECT feature,value FROM features f where f.product_id=?;'
+  const query1 = 'SELECT * FROM products p where p.id=? LIMIT 1';
+  const query2 = 'SELECT feature,value FROM features f where f.product_id=?';
   Promise.all([queryPromise(query1, [id]), queryPromise(query2, [id])])
     .then(results => {
-      const output = { ...results[0][0], features: results[1] }
+      const output = { ...results[0][0], features: results[1] };
       mapAndSend(res, getKey(req), output);
-
     })
-    .catch(e => logAndSend(e, res))
-})
+    .catch(e => logAndSend(e, res));
+});
+
+app.get('/:id/2', (req, res) => {
+  let id = req.params.id;
+  if (id < 0 || id % 1 !== 0) return res.status(400).send("invalid id");
+  const query1 = `SELECT p.id,name,slogan,description,category,default_price,GROUP_CONCAT(feature,',',value)as features
+  FROM products p
+  JOIN features f
+  ON p.id=f.product_id
+  WHERE f.product_id=?`;
+  queryPromise(query1, [id, id])
+    .then(results => {
+      const output = { ...results[0] };
+      let featureList = results[0].features?.split(',') || [];
+      let newFeatures = [];
+      output['features'] = newFeatures;
+      for (let i = 0; i < featureList.length; i += 2) {
+        const [feature, value] = [featureList[i], featureList[i + 1]];
+        newFeatures.push({ feature, value });
+      }
+      mapAndSend(res, getKey(req), output);
+    })
+    .catch(e => logAndSend(e, res));
+});
 
 
-const PORT = 4000;
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
