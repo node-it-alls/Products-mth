@@ -45,7 +45,7 @@ async function processLineByLine(nameFields) {
       continue;
     }
     let inputs = Papa.parse(line).data[0];
-    inputs = inputs.map(x => x === 'null' ? null : x);
+    inputs = inputs.map(x => (x === 'null' || x === "NULL") ? null : x);
     batch[tableName].push(inputs);
     if (batch[tableName].length === BATCH_SIZE) {
       await insertBatch(tableName, fields)
@@ -78,6 +78,7 @@ async function insertBatch(tableName, fields) {
           .join(",")
         + ")"
     });
+
   const queryAndVals = query + vals.join(',');
   const queryPromise = promisify(pool.query).bind(pool);
   try {
