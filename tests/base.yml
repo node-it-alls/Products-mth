@@ -19,16 +19,16 @@ scenarios:
   - name: "Making random Queries"
     flow:
     - loop:
-      - get:
-          url: "/?page={{$randomNumber(5,20)}}"
-      - get:
-          url: "/1/styles"
+      # - get:
+      #     url: "/?page={{$randomNumber(5,20)}}"
+      # - get:
+      #     url: "/1/styles"
       - get:
           url: "/{{$randomNumber(1,1000011)}}/styles"
-      - get:
-          url: "/{{$randomNumber(1,1000011)}}/styles2"
-      - get:
-          url: "/{{$randomNumber(1,1000011)}}/related"
-      - get:
-          url: "/{{$randomNumber(1,1000011)}}"
+      # - get:
+      #     url: "/{{$randomNumber(1,1000011)}}/styles2"
+      # - get:
+      #     url: "/{{$randomNumber(1,1000011)}}/related"
+      # - get:
+      #     url: "/{{$randomNumber(1,1000011)}}"
       count: 100
