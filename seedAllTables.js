@@ -9,10 +9,11 @@ require('dotenv').config()
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
+  password: process.env.DB_PW,
   database: process.env.DB_NAME,
+  port:process.env.DB_PORT,
   connectionLimit: 100,
 });
-
 const allTables = [
   ['features', ['id', 'product_id', 'feature', 'value']],
   ['photos', ['id', 'style_id', 'url', 'thumbnail_url']],
@@ -22,7 +23,7 @@ const allTables = [
   ['styles', ['id', 'product_id', 'name', 'sale_price', 'original_price', '`default?`']]
 ]
 ///////////////////////////////////////////////////////////////////////////////////////////
-const BATCH_SIZE = 50000;
+const BATCH_SIZE = 1000;
 let insertCount = 0;
 
 let batch = {};
@@ -56,24 +57,21 @@ async function processLineByLine(nameFields) {
   console.log('done');
 }
 async function insertBatch(tableName, fields) {
-
-  //const query = `REPLACE INTO ${tableName} (${fields.join(',')}) VALUES ?`;
-  //console.log(fields);
   const query = `REPLACE INTO ${tableName} (${fields.join(',')}) VALUES`;
   const vals = batch[tableName]
-    .map((x) => {
+    .map((record) => {
       return "(" +
-        x.map((y, i) => {
-          if (y === null)
+        record.map((element, i) => {
+          if (element === null)
             return 'NULL'
-          else if (!isNaN(y)) {
+          else if (!isNaN(element)) {
             if (['sale_price', 'original_price', 'default_price'].includes(fields[i])) {
-              return Number(y).toFixed(2);
+              return Number(element).toFixed(2);
             }
-            return y;
+            return element;
           }
           else
-            return "'" + y.replaceAll("'", "\\'") + "'"
+            return "'" + element.replaceAll("'", "\\'") + "'"
         })
           .join(",")
         + ")"
@@ -82,27 +80,20 @@ async function insertBatch(tableName, fields) {
   const queryAndVals = query + vals.join(',');
   const queryPromise = promisify(pool.query).bind(pool);
   try {
-    await queryPromise(queryAndVals)
-    //queryPromise(query, [batch[tableName]])
-    // queryPromise(queryAndVals)
-    // .then(r => {
-    // console.log(`Inserted batch of ${batch[tableName].length} records.`);
-    // delete batch[tableName];
-    // batch[tableName] = []; // Clear the batch for the next set of records
-    // })
-    // .catch(e => console.error('Error inserting batch:', e))
-  } catch (e) {
-    console.error('Error inserting batch:', e)
-  } finally {
+    await queryPromise(queryAndVals);
     console.log(`Inserted batch of ${batch[tableName].length} records.`);
+
+  } catch (e) {
+    console.error('Error inserting batch:', e);
+  } finally {
     delete batch[tableName];
     batch[tableName] = []; // Clear the batch for the next set of records
 
   }
 }
 
-let go = async () => await allTables.forEach(table => processLineByLine(table))
-go();
+const  loadAllTables = async () => await allTables.forEach(table => processLineByLine(table))
+loadAllTables();
 
 process.on('exit', () => {
   pool.end();
