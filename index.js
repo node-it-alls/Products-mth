@@ -5,7 +5,7 @@ const app = express();
 app.use(express.json());
 require('dotenv').config()
 const { LRUCache } = require('lru-cache')
-
+const path = require('path');
 const CACHING_ENABLED = false;
 
 const pool = mysql.createPool({
@@ -14,9 +14,9 @@ const pool = mysql.createPool({
   password: process.env.DB_PW,
   database: process.env.DB_NAME,
   port:process.env.DB_PORT,
-  connectionLimit: 100,
+  connectionLimit: 75,
 });
-
+app.use(express.static(path.join(__dirname,'Dist')));
 const queryPromise = promisify(pool.query).bind(pool);
 
 let cache = null;
